@@ -244,6 +244,7 @@ export class IpcRendererEventChannel {
   };
 
   public static account: IAccountMethods = {
+    // TODO: IPC does not support Date objects so we have to use custom transformer.
     listen: listen(ACCOUNT_DATA_CHANGED),
     login: requestSender(DO_LOGIN),
     logout: requestSender(DO_LOGOUT),
@@ -329,6 +330,7 @@ export class IpcMainEventChannel {
   };
 
   public static account: IAccountHandlers = {
+    // TODO: IPC does not support Date objects so we have to use custom transformer.
     notify: sender<IAccountData | undefined>(ACCOUNT_DATA_CHANGED),
     handleLogin: requestHandler(DO_LOGIN),
     handleLogout: requestHandler(DO_LOGOUT),
