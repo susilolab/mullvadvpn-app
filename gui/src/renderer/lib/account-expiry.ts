@@ -5,8 +5,8 @@ import { messages } from '../../shared/gettext';
 export default class AccountExpiry {
   private expiry: moment.Moment;
 
-  constructor(isoString: string, locale: string) {
-    this.expiry = moment(isoString).locale(locale);
+  constructor(date: Date, locale: string) {
+    this.expiry = moment(date).locale(locale);
   }
 
   public hasExpired(): boolean {

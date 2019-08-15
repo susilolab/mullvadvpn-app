@@ -13,7 +13,7 @@ import { AccountToken } from '../../shared/daemon-rpc-types';
 
 interface IProps {
   accountToken?: AccountToken;
-  accountExpiry?: string;
+  accountExpiry?: Date;
   expiryLocale: string;
   isOffline: boolean;
   onLogout: () => void;
@@ -86,7 +86,7 @@ export default class Account extends Component<IProps> {
   }
 }
 
-function FormattedAccountExpiry(props: { expiry?: string; locale: string }) {
+function FormattedAccountExpiry(props: { expiry?: Date; locale: string }) {
   if (props.expiry) {
     const expiry = new AccountExpiry(props.expiry, props.locale);
 

@@ -21,7 +21,7 @@ import { LoginState } from '../redux/account/reducers';
 
 export interface IProps {
   loginState: LoginState;
-  accountExpiry?: string;
+  accountExpiry?: Date;
   expiryLocale: string;
   appVersion: string;
   consistentVersion: boolean;

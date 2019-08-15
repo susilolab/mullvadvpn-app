@@ -5,7 +5,7 @@ export type LoginState = 'none' | 'logging in' | 'failed' | 'ok';
 export interface IAccountReduxState {
   accountToken?: AccountToken;
   accountHistory: AccountToken[];
-  expiry?: string; // ISO8601
+  expiry?: Date;
   status: LoginState;
   error?: Error;
 }

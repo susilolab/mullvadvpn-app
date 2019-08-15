@@ -221,7 +221,7 @@ const tunnelOptionsSchema = partialObject({
 });
 
 const accountDataSchema = partialObject({
-  expiry: string,
+  expiry: string.andThen((value, _) => new Date(value)),
 });
 
 const tunnelStateSchema = oneOf(

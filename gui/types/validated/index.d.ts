@@ -22,6 +22,7 @@ declare module 'validated/schema' {
 
   export class Node<T> {
     validate(context: Context): ValidateResult<ExtractNodeType<Node<T>>>;
+    andThen<R>(refine: (value: T, error: (message: String) => void) => R): Node<R>;
   }
 
   type NodeDict = { [name: string]: Node<unknown> };

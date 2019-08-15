@@ -575,7 +575,7 @@ class ApplicationMain {
     }
 
     if (this.accountData) {
-      this.detectStaleAccountExpiry(newState, new Date(this.accountData.expiry));
+      this.detectStaleAccountExpiry(newState, this.accountData.expiry);
     }
   }
 

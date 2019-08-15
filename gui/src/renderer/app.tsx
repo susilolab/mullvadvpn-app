@@ -540,7 +540,7 @@ export default class AppRenderer {
     this.reduxActions.settings.updateGuiSettings(guiSettings);
   }
 
-  private setAccountExpiry(expiry?: string) {
+  private setAccountExpiry(expiry?: Date) {
     this.reduxActions.account.updateAccountExpiry(expiry);
   }
 

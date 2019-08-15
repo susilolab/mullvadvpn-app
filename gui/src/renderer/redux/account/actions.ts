@@ -34,7 +34,7 @@ interface IUpdateAccountHistoryAction {
 
 interface IUpdateAccountExpiryAction {
   type: 'UPDATE_ACCOUNT_EXPIRY';
-  expiry?: string;
+  expiry?: Date;
 }
 
 export type AccountAction =
@@ -93,7 +93,7 @@ function updateAccountHistory(accountHistory: AccountToken[]): IUpdateAccountHis
   };
 }
 
-function updateAccountExpiry(expiry?: string): IUpdateAccountExpiryAction {
+function updateAccountExpiry(expiry?: Date): IUpdateAccountExpiryAction {
   return {
     type: 'UPDATE_ACCOUNT_EXPIRY',
     expiry,
