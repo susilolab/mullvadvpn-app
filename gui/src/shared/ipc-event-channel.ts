@@ -1,6 +1,8 @@
 import { ipcMain, ipcRenderer, WebContents } from 'electron';
 import log from 'electron-log';
 import * as uuid from 'uuid';
+import { validate } from 'validated/object';
+import { partialObject, string } from 'validated/schema';
 
 import { IGuiSettingsState } from './gui-settings-state';
 
@@ -33,6 +35,10 @@ export interface IAppStateSnapshot {
   guiSettings: IGuiSettingsState;
   wireguardPublicKey?: string;
 }
+
+const accountDataSchema = partialObject({
+  expiry: string.andThen((value, _) => new Date(value)),
+});
 
 interface ISender<T> {
   notify(webContents: WebContents, value: T): void;
@@ -244,8 +250,9 @@ export class IpcRendererEventChannel {
   };
 
   public static account: IAccountMethods = {
-    // TODO: IPC does not support Date objects so we have to use custom transformer.
-    listen: listen(ACCOUNT_DATA_CHANGED),
+    listen: listenTransform<any, IAccountData>(ACCOUNT_DATA_CHANGED, (input) =>
+      validate(accountDataSchema, input),
+    ),
     login: requestSender(DO_LOGIN),
     logout: requestSender(DO_LOGOUT),
   };
@@ -330,7 +337,6 @@ export class IpcMainEventChannel {
   };
 
   public static account: IAccountHandlers = {
-    // TODO: IPC does not support Date objects so we have to use custom transformer.
     notify: sender<IAccountData | undefined>(ACCOUNT_DATA_CHANGED),
     handleLogin: requestHandler(DO_LOGIN),
     handleLogout: requestHandler(DO_LOGOUT),
@@ -350,8 +356,15 @@ export class IpcMainEventChannel {
 }
 
 function listen<T>(event: string): (fn: (value: T) => void) => void {
-  return (fn: (value: T) => void) => {
-    ipcRenderer.on(event, (_event: Electron.Event, newState: T) => fn(newState));
+  return listenTransform(event, (value: T) => value);
+}
+
+function listenTransform<T, U>(
+  event: string,
+  valueTransformer: (source: T) => U,
+): (fn: (value: U) => void) => void {
+  return (fn: (value: U) => void) => {
+    ipcRenderer.on(event, (_event: Electron.Event, newState: T) => fn(valueTransformer(newState)));
   };
 }
 
@@ -362,8 +375,15 @@ function set<T>(event: string): (value: T) => void {
 }
 
 function sender<T>(event: string): (webContents: WebContents, value: T) => void {
+  return senderTransform(event, (value: T) => value);
+}
+
+function senderTransform<T, U>(
+  event: string,
+  valueTransformer: (source: T) => U,
+): (webContents: WebContents, value: T) => void {
   return (webContents: WebContents, value: T) => {
-    webContents.send(event, value);
+    webContents.send(event, valueTransformer(value));
   };
 }
 
