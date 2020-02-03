@@ -58,7 +58,7 @@ private extension Publishers.MutuallyExclusive {
     {
         typealias MakePublisherBlock = () -> PublisherType
 
-        private let subscriber: SubscriberType
+        private var subscriber: SubscriberType?
         private var innerSubscriber: AnyCancellable?
         private let createPublisher: MakePublisherBlock
 
@@ -66,7 +66,7 @@ private extension Publishers.MutuallyExclusive {
         private let executionQueue: Context
         private let sema = DispatchSemaphore(value: 0)
 
-        private let cancelLock = NSLock()
+        private let lock = NSRecursiveLock()
         private var isCancelled = false
 
         init(subscriber: SubscriberType,
@@ -83,17 +83,23 @@ private extension Publishers.MutuallyExclusive {
         func request(_ demand: Subscribers.Demand) {
             self.exclusivityQueue.schedule {
                 self.executionQueue.schedule {
-                    self.cancelLock.withCriticalBlock {
+                    self.lock.withCriticalBlock {
                         guard !self.isCancelled else { return }
 
                         self.innerSubscriber = self.createPublisher()
                             .sink(receiveCompletion: { [weak self] (completion) in
                                 guard let self = self else { return }
 
-                                self.subscriber.receive(completion: completion)
-                                self.signalSemaphore()
+                                self.lock.withCriticalBlock {
+                                    self.subscriber?.receive(completion: completion)
+                                    self.signalSemaphore()
+                                }
                             }, receiveValue: { [weak self] (output) in
-                                _ = self?.subscriber.receive(output)
+                                guard let self = self else { return }
+
+                                self.lock.withCriticalBlock {
+                                    _ = self.subscriber?.receive(output)
+                                }
                             })
                     }
                 }
@@ -102,13 +108,15 @@ private extension Publishers.MutuallyExclusive {
         }
 
         func cancel() {
-            cancelLock.withCriticalBlock {
+            lock.withCriticalBlock {
                 guard !isCancelled else { return }
 
                 isCancelled = true
 
                 innerSubscriber?.cancel()
                 innerSubscriber = nil
+
+                subscriber = nil
 
                 signalSemaphore()
             }
@@ -122,7 +130,7 @@ private extension Publishers.MutuallyExclusive {
 
 }
 
-private extension NSLock {
+private extension NSRecursiveLock {
     func withCriticalBlock<T>(_ body: () -> T) -> T {
         lock()
         defer { unlock() }
