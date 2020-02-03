@@ -46,6 +46,19 @@ extension Publishers {
     }
 }
 
+extension DispatchQueue {
+
+    func exclusivePublisher<P>(receiveOn: DispatchQueue, createPublisher: @escaping () -> P)
+        -> MutuallyExclusive<P, DispatchQueue>
+        where P: Publisher {
+        return MutuallyExclusive(
+            exclusivityQueue: self,
+            executionQueue: receiveOn,
+            createPublisher: createPublisher)
+    }
+
+}
+
 private extension Publishers.MutuallyExclusive {
 
     /// A subscription used by `MutuallyExclusive` publisher
@@ -78,6 +91,10 @@ private extension Publishers.MutuallyExclusive {
             self.createPublisher = createPublisher
             self.exclusivityQueue = exclusivityQueue
             self.executionQueue = executionQueue
+        }
+
+        deinit {
+            Swift.print("Subscription<\(SubscriberType.self), \(PublisherType.self), \(Context.self)>.deinit")
         }
 
         func request(_ demand: Subscribers.Demand) {

@@ -192,10 +192,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     private func startTunnel() -> AnyPublisher<(), PacketTunnelProviderError> {
-        MutuallyExclusive(
-            exclusivityQueue: exclusivityQueue,
-            executionQueue: executionQueue
-        ) { () -> AnyPublisher<(), PacketTunnelProviderError> in
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
+            () -> AnyPublisher<(), PacketTunnelProviderError> in
             os_log(.default, log: tunnelProviderLog, "Starting the tunnel")
 
             self.startedTunnel = true
@@ -215,14 +213,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     private func stopTunnel() -> AnyPublisher<(), Never> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) { () -> AnyPublisher<(), Never> in
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
+            () -> AnyPublisher<(), Never> in
             os_log(.default, log: tunnelProviderLog, "Stopping the tunnel")
-
+            
             self.startedTunnel = false
-
+            
             if let device = self.wireguardDevice {
                 self.wireguardDevice = nil
-
+                
                 // ignore errors at this point
                 return device.stop()
                     .replaceError(with: ())
@@ -236,7 +235,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     private func reloadTunnel() -> AnyPublisher<(), PacketTunnelProviderError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             () -> AnyPublisher<(), PacketTunnelProviderError> in
             guard self.startedTunnel else {
                 os_log(.default, log: tunnelProviderLog,

@@ -317,7 +317,7 @@ class TunnelManager {
     /// The given account token is used to ensure that the system tunnel was configured for the same
     /// account. The system tunnel is removed in case of inconsistency.
     func loadTunnel(accountToken: String?) -> AnyPublisher<(), TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             NETunnelProviderManager.loadAllFromPreferences()
                 .mapError { LoadTunnelError.loadTunnels($0) }
                 .receive(on: self.executionQueue)
@@ -354,7 +354,7 @@ class TunnelManager {
     }
 
     func startTunnel() -> AnyPublisher<(), TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             Just(self.accountToken)
                 .setFailureType(to: TunnelManagerError.self)
                 .replaceNil(with: .missingAccount)
@@ -371,14 +371,14 @@ class TunnelManager {
     }
 
     func stopTunnel() -> AnyPublisher<(), Never> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) { () -> Just<()> in
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) { () -> Just<()> in
             self.tunnelProvider?.connection.stopVPNTunnel()
             return Just(())
         }.eraseToAnyPublisher()
     }
 
     func setAccount(accountToken: String) -> AnyPublisher<(), TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             self.makeTunnelConfiguration(accountToken: accountToken).publisher
                 .mapError { .makeTunnelConfiguration($0) }
                 .flatMap { (tunnelConfig: TunnelConfiguration) -> AnyPublisher<(), SetAccountError> in
@@ -423,7 +423,7 @@ class TunnelManager {
 
     /// Remove the account token and remove the active tunnel
     func unsetAccount() -> AnyPublisher<(), TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             Just(self.accountToken)
                 .setFailureType(to: TunnelManagerError.self)
                 .replaceNil(with: .missingAccount)
@@ -526,7 +526,7 @@ class TunnelManager {
     }
 
     func regeneratePrivateKey() -> AnyPublisher<(), TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             Just(self.accountToken)
                 .setFailureType(to: TunnelManagerError.self)
                 .replaceNil(with: .missingAccount)
@@ -587,7 +587,7 @@ class TunnelManager {
     }
 
     func setRelayConstraints(_ constraints: RelayConstraints) -> AnyPublisher<(), TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             Just(self.accountToken)
                 .setFailureType(to: TunnelManagerError.self)
                 .replaceNil(with: .missingAccount)
@@ -612,7 +612,7 @@ class TunnelManager {
     }
 
     func getRelayConstraints() -> AnyPublisher<RelayConstraints, TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             Just(self.accountToken)
                 .setFailureType(to: TunnelManagerError.self)
                 .replaceNil(with: .missingAccount)
@@ -632,7 +632,7 @@ class TunnelManager {
     }
 
     func getWireguardPublicKey() -> AnyPublisher<WireguardPublicKey, TunnelManagerError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             Just(self.accountToken)
                 .setFailureType(to: TunnelManagerError.self)
                 .replaceNil(with: .missingAccount)

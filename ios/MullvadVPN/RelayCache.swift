@@ -65,7 +65,7 @@ class RelayCache {
 
     /// Read the relay cache and update it from remote if needed.
     func read() -> AnyPublisher<CachedRelayList, RelayCacheError> {
-        MutuallyExclusive(exclusivityQueue: exclusivityQueue, executionQueue: executionQueue) {
+        exclusivityQueue.exclusivePublisher(receiveOn: executionQueue) {
             self.makeReaderPublisher()
         }.eraseToAnyPublisher()
     }
